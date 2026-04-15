@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Streaming text cursor blink */
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Streaming text slide-in from right */
+@keyframes text-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-text-slide-in {
+  animation: text-slide-in 0.15s ease-out;
+}
+
+/* Streaming bubble entrance */
+@keyframes bubble-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-bubble-enter {
+  animation: bubble-enter 0.25s ease-out;
+}
+
+/* Audio level pulse ring */
+@keyframes level-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-level-pulse {
+  animation: level-pulse 1.2s ease-out infinite;
+}
+
+/* Translation fade in */
+@keyframes translation-reveal {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+  }
+}
+
+.animate-translation-reveal {
+  animation: translation-reveal 0.3s ease-out;
+  overflow: hidden;
+}
+
+/* Smooth streaming text transition */
+.streaming-text {
+  transition: opacity 0.15s ease;
+}
+
+/* Draft text fade effect */
+.draft-text {
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+
+/* Waveform bar animation */
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.animate-waveform {
+  animation: waveform 0.6s ease-in-out infinite;
+}
+
+/* Language dropdown scrollbar - always visible on macOS */
+.lang-dropdown-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.lang-dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lang-dropdown-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.dark .lang-dropdown-list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+}

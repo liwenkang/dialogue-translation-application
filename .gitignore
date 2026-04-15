@@ -1,0 +1,28 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+release
+build
+
+# Python
+.venv/
+.pyinstaller-venv
+__pycache__/
+*.pyc
+*.spec
+
+# Database
+*.db
+
+# Env & secrets
+.env
+.env.*
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

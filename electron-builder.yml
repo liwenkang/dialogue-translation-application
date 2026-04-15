@@ -1,0 +1,38 @@
+appId: com.dialogue-translation.app
+productName: Dialogue Translation
+directories:
+  buildResources: build
+  output: release
+files:
+  - "dist/main/**/*"
+  - "dist/preload/**/*"
+  - "dist/renderer/**/*"
+  - "dist/shared/**/*"
+  - "package.json"
+  - "node_modules/**/*"
+extraResources:
+  - from: "dist/pyinstaller/translate-server"
+    to: "translate-server"
+  - from: "dist/pyinstaller/convert-model"
+    to: "convert-model"
+  - from: "dist/whisper-cpp"
+    to: "whisper-cpp"
+extraMetadata:
+  main: dist/main/index.js
+mac:
+  category: public.app-category.productivity
+  type: distribution
+  forceCodeSigning: true
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: "This app needs microphone access for voice input and speech recognition."
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true

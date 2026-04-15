@@ -1,0 +1,53 @@
+export const IPC_CHANNELS = {
+  APP: {
+    GET_PLATFORM: "app:get-platform",
+    GET_MICROPHONE_ACCESS_STATUS: "app:get-microphone-access-status",
+    REQUEST_MICROPHONE_ACCESS: "app:request-microphone-access",
+  },
+  STORAGE: {
+    GET_MESSAGES: "storage:get-messages",
+    SAVE_MESSAGE: "storage:save-message",
+    UPDATE_TRANSLATION: "storage:update-translation",
+    CLEAR_MESSAGES: "storage:clear-messages",
+    DELETE_MESSAGE: "storage:delete-message",
+    EXPORT_MESSAGES: "storage:export-messages",
+  },
+  TRANSLATE: {
+    TEXT: "translate:text",
+    TEXT_STREAM: "translate:text-stream",
+    TEXT_STREAM_CHUNK: "translate:text-stream-chunk",
+    DETECT_LANGUAGE: "translate:detect-language",
+    CHECK_MODEL: "translate:check-model",
+    CHECK_INSTALLED: "translate:check-installed",
+    INSTALL_MODEL: "translate:install-model",
+    INSTALL_PAIR: "translate:install-pair",
+    DELETE_PAIR: "translate:delete-pair",
+    ALL_MODEL_STATUS: "translate:all-model-status",
+    INSTALL_PROGRESS: "translate:install-progress",
+  },
+  WHISPER: {
+    TRANSCRIBE: "whisper:transcribe",
+    CHECK_AVAILABILITY: "whisper:check-availability",
+    STREAM_SEGMENT: "whisper:stream-segment",
+    STREAM_START: "whisper:stream-start",
+    STREAM_AUDIO: "whisper:stream-audio",
+    STREAM_END: "whisper:stream-end",
+    STREAM_PARTIAL: "whisper:stream-partial",
+    STREAM_COMMIT: "whisper:stream-commit",
+  },
+  AUDIO: {
+    START_RECORDING: "audio:start-recording",
+    STOP_RECORDING: "audio:stop-recording",
+    STATUS: "audio:status",
+    TOGGLE: "audio:toggle",
+  },
+  MODEL: {
+    DOWNLOAD: "model:download",
+    STATUS: "model:status",
+    DOWNLOAD_PROGRESS: "model:download-progress",
+  },
+  PERFORMANCE: {
+    GET_REPORT: "performance:get-report",
+    TAKE_SNAPSHOT: "performance:take-snapshot",
+  },
+} as const;
