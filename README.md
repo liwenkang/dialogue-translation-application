@@ -49,13 +49,11 @@
 
 ## 演示截图
 
-![image_1](/Users/liwenkang/Desktop/dialogue-translation-application/images/image_1.png)
+![image_1](./images/image_1.png)
 
-![image_1](/Users/liwenkang/Desktop/dialogue-translation-application/images/image_1.png)
+![image_2](./images/image_2.png)
 
-![image_2](/Users/liwenkang/Desktop/dialogue-translation-application/images/image_2.png)
-
-![image_3](/Users/liwenkang/Desktop/dialogue-translation-application/images/image_3.png)
+![image_3](./images/image_3.png)
 
 ## 环境要求
 
