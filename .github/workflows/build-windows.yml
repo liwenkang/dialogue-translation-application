@@ -3,6 +3,9 @@ name: Build Windows
 on:
   workflow_dispatch: # Manual trigger from GitHub UI
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     runs-on: windows-latest
