@@ -1,0 +1,319 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: "Platforms to build"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - macos
+          - windows
+
+permissions:
+  contents: write
+
+jobs:
+  # ────────────────────────────────────────────────────
+  # macOS arm64
+  # ────────────────────────────────────────────────────
+  build-macos:
+    if: inputs.platforms == 'all' || inputs.platforms == 'macos'
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node.js ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node dependencies
+        run: pnpm install
+
+      - name: Build main & renderer
+        run: pnpm build
+
+      # ── Python / PyInstaller ──
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create Python venv & install deps
+        run: |
+          python3 -m venv .pyinstaller-venv
+          .pyinstaller-venv/bin/pip install pyinstaller
+          .pyinstaller-venv/bin/pip install ctranslate2 sentencepiece
+          .pyinstaller-venv/bin/pip install "numpy<2" "torch==2.2.2" "transformers==4.41.2"
+          .pyinstaller-venv/bin/pip install huggingface_hub
+
+      - name: Build Python binaries (PyInstaller)
+        run: |
+          source .pyinstaller-venv/bin/activate
+
+          pyinstaller --onedir \
+            --distpath dist/pyinstaller \
+            --workpath build/pyinstaller \
+            --name translate-server \
+            --hidden-import=ctranslate2 \
+            --hidden-import=sentencepiece \
+            --collect-all ctranslate2 \
+            --collect-all sentencepiece \
+            --noconfirm \
+            native/ctranslate2/translate_server.py
+
+          pyinstaller --onedir \
+            --distpath dist/pyinstaller \
+            --workpath build/pyinstaller \
+            --name convert-model \
+            --hidden-import=ctranslate2 \
+            --hidden-import=sentencepiece \
+            --hidden-import=transformers \
+            --hidden-import=huggingface_hub \
+            --hidden-import=torch \
+            --collect-all ctranslate2 \
+            --collect-all sentencepiece \
+            --collect-all transformers \
+            --noconfirm \
+            native/ctranslate2/convert_model.py
+
+      - name: Verify Python binaries
+        run: |
+          test -f dist/pyinstaller/translate-server/translate-server || { echo "translate-server not found"; exit 1; }
+          test -f dist/pyinstaller/convert-model/convert-model || { echo "convert-model not found"; exit 1; }
+          echo "Python binaries OK"
+
+      # ── whisper.cpp ──
+      - name: Build whisper.cpp
+        run: bash scripts/build-whisper.sh
+
+      - name: Verify whisper.cpp binaries
+        run: |
+          test -f dist/whisper-cpp/whisper-server || { echo "whisper-server not found"; exit 1; }
+          echo "whisper.cpp binaries OK"
+
+      # ── Electron Builder ──
+      - name: Build macOS installer
+        run: npx electron-builder --mac --arm64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List release artifacts
+        run: ls -lh release/*.dmg 2>/dev/null || echo "No DMG found"
+
+      # ── Upload ──
+      - name: Upload macOS installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-installer
+          path: |
+            release/*.dmg
+            release/*.dmg.blockmap
+          retention-days: 30
+
+  # ────────────────────────────────────────────────────
+  # Windows x64
+  # ────────────────────────────────────────────────────
+  build-windows:
+    if: inputs.platforms == 'all' || inputs.platforms == 'windows'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Node.js ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node dependencies
+        run: pnpm install
+
+      - name: Build main & renderer
+        run: pnpm build
+
+      # ── Python / PyInstaller ──
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Create Python venv & install deps
+        shell: pwsh
+        run: |
+          python -m venv .pyinstaller-venv
+          .\.pyinstaller-venv\Scripts\pip install pyinstaller
+          .\.pyinstaller-venv\Scripts\pip install ctranslate2 sentencepiece
+          .\.pyinstaller-venv\Scripts\pip install "numpy<2" "torch==2.2.2" "transformers==4.41.2"
+          .\.pyinstaller-venv\Scripts\pip install huggingface_hub
+
+      - name: Build Python binaries (PyInstaller)
+        shell: pwsh
+        run: |
+          .\.pyinstaller-venv\Scripts\Activate.ps1
+
+          pyinstaller --onedir `
+            --distpath dist/pyinstaller `
+            --workpath build/pyinstaller `
+            --name translate-server `
+            --hidden-import=ctranslate2 `
+            --hidden-import=sentencepiece `
+            --collect-all ctranslate2 `
+            --collect-all sentencepiece `
+            --noconfirm `
+            native/ctranslate2/translate_server.py
+
+          pyinstaller --onedir `
+            --distpath dist/pyinstaller `
+            --workpath build/pyinstaller `
+            --name convert-model `
+            --hidden-import=ctranslate2 `
+            --hidden-import=sentencepiece `
+            --hidden-import=transformers `
+            --hidden-import=huggingface_hub `
+            --hidden-import=torch `
+            --collect-all ctranslate2 `
+            --collect-all sentencepiece `
+            --collect-all transformers `
+            --noconfirm `
+            native/ctranslate2/convert_model.py
+
+      - name: Verify Python binaries
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "dist\pyinstaller\translate-server\translate-server.exe")) {
+            Write-Error "translate-server.exe not found"; exit 1
+          }
+          if (-not (Test-Path "dist\pyinstaller\convert-model\convert-model.exe")) {
+            Write-Error "convert-model.exe not found"; exit 1
+          }
+          Write-Host "Python binaries OK"
+
+      # ── whisper.cpp ──
+      - name: Build whisper.cpp
+        shell: pwsh
+        run: |
+          $WHISPER_CPP_VERSION = "v1.7.4"
+          $BUILD_DIR = "$env:RUNNER_TEMP\whisper-cpp-build"
+          $OUTPUT_DIR = "dist\whisper-cpp"
+
+          git clone --depth 1 --branch $WHISPER_CPP_VERSION https://github.com/ggerganov/whisper.cpp.git $BUILD_DIR
+
+          cmake -S $BUILD_DIR -B "$BUILD_DIR\build" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
+          cmake --build "$BUILD_DIR\build" --config Release -j $env:NUMBER_OF_PROCESSORS
+
+          New-Item -ItemType Directory -Force -Path $OUTPUT_DIR | Out-Null
+
+          # Copy executables
+          foreach ($bin in @("whisper-server", "whisper-cli")) {
+            $candidates = @(
+              "$BUILD_DIR\build\bin\Release\$bin.exe",
+              "$BUILD_DIR\build\bin\$bin.exe",
+              "$BUILD_DIR\build\Release\$bin.exe"
+            )
+            foreach ($candidate in $candidates) {
+              if (Test-Path $candidate) {
+                Copy-Item $candidate "$OUTPUT_DIR\$bin.exe"
+                Write-Host "Copied $bin.exe"
+                break
+              }
+            }
+          }
+
+          # Copy DLLs
+          Get-ChildItem -Path "$BUILD_DIR\build" -Recurse -Include "ggml*.dll","whisper*.dll" | ForEach-Object {
+            $dest = "$OUTPUT_DIR\$($_.Name)"
+            if (-not (Test-Path $dest)) {
+              Copy-Item $_.FullName $dest
+              Write-Host "Copied $($_.Name)"
+            }
+          }
+
+          # Verify
+          if (-not (Test-Path "$OUTPUT_DIR\whisper-server.exe")) {
+            Write-Error "whisper-server.exe not found"
+            exit 1
+          }
+          Write-Host "whisper.cpp binaries OK"
+          Get-ChildItem $OUTPUT_DIR
+
+      # ── Electron Builder ──
+      - name: Build Windows installer
+        run: npx electron-builder --win --x64
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List release artifacts
+        shell: pwsh
+        run: Get-ChildItem release -Filter "*.exe" | Format-Table Name, Length
+
+      # ── Upload ──
+      - name: Upload Windows installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: |
+            release/*.exe
+            release/*.exe.blockmap
+          retention-days: 30
+
+  # ────────────────────────────────────────────────────
+  # Release (runs after both builds complete)
+  # ────────────────────────────────────────────────────
+  release:
+    needs: [build-macos, build-windows]
+    if: always() && (needs.build-macos.result == 'success' || needs.build-windows.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (for package.json version)
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: package.json
+          sparse-checkout-cone-mode: false
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=$(node -p 'require("./package.json").version')" >> "$GITHUB_OUTPUT"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List downloaded artifacts
+        run: find artifacts -type f | head -50
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}
+          name: v${{ steps.version.outputs.VERSION }}
+          body: |
+            Automated build from `${{ github.ref_name }}` branch.
+            Commit: ${{ github.sha }}
+          draft: true
+          prerelease: false
+          files: |
+            artifacts/**/*.dmg
+            artifacts/**/*.exe
+            artifacts/**/*.blockmap
+            artifacts/**/*.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
