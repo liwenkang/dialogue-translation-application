@@ -100,8 +100,7 @@ export default function ChatView() {
   return (
     <div
       ref={scrollContainerRef}
-      className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-      style={{ scrollbarGutter: "stable" }}
+      className="flex-1 overflow-y-scroll px-4 py-4 space-y-3 chat-scroll-container"
       onScroll={handleScroll}
     >
       {hasMoreMessages && messages.length > 0 && (

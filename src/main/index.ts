@@ -88,26 +88,29 @@ function registerIpcHandlers() {
   ipcMain.handle(
     IPC_CHANNELS.APP.GET_MICROPHONE_ACCESS_STATUS,
     (): MediaAccessStatus => {
-      if (process.platform !== "darwin") {
-        return "granted";
+      // getMediaAccessStatus is available on both macOS and Windows
+      if (process.platform === "darwin" || process.platform === "win32") {
+        return systemPreferences.getMediaAccessStatus("microphone");
       }
-      return systemPreferences.getMediaAccessStatus("microphone");
+      // Linux has no system-level media access API
+      return "granted";
     },
   );
   ipcMain.handle(
     IPC_CHANNELS.APP.REQUEST_MICROPHONE_ACCESS,
     async (): Promise<boolean> => {
-      if (process.platform !== "darwin") {
-        return true;
+      if (process.platform === "darwin") {
+        const status = systemPreferences.getMediaAccessStatus("microphone");
+        if (status === "granted") return true;
+        if (status === "denied" || status === "restricted") return false;
+        return systemPreferences.askForMediaAccess("microphone");
       }
-      const status = systemPreferences.getMediaAccessStatus("microphone");
-      if (status === "granted") {
-        return true;
+      if (process.platform === "win32") {
+        // Windows has no programmatic prompt; check current status only.
+        // If denied, the user must grant access in Windows Settings.
+        return systemPreferences.getMediaAccessStatus("microphone") === "granted";
       }
-      if (status === "denied" || status === "restricted") {
-        return false;
-      }
-      return systemPreferences.askForMediaAccess("microphone");
+      return true;
     },
   );
 

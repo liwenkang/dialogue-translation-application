@@ -113,9 +113,17 @@ export function useAudioCapture(): AudioCaptureHandle {
       });
       streamRef.current = stream;
 
-      const audioCtx = new AudioContext();
+      // Pin sample rate to 48kHz so resampling to 16kHz is a clean 3:1 ratio
+      // on all platforms. Without this, Windows may use the output device rate
+      // (e.g. 44100) which can cause sample-rate misreporting with WASAPI.
+      const audioCtx = new AudioContext({ sampleRate: 48000 });
       audioCtxRef.current = audioCtx;
       inputSampleRateRef.current = audioCtx.sampleRate;
+
+      // Ensure AudioContext is running (may start suspended on some Windows configs)
+      if (audioCtx.state === "suspended") {
+        await audioCtx.resume();
+      }
 
       const source = audioCtx.createMediaStreamSource(stream);
       sourceRef.current = source;

@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Fix Windows 11 frameless window hit-test: explicit no-drag
+   prevents DWM from intercepting mouse events in content area */
+body {
+  -webkit-app-region: no-drag;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -109,6 +115,33 @@
 
 .animate-waveform {
   animation: waveform 0.6s ease-in-out infinite;
+}
+
+/* Chat scroll container: prevent scrollbar flicker on Windows
+   by keeping scrollbar track always present but subtle */
+.chat-scroll-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.chat-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.dark .chat-scroll-container::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark .chat-scroll-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Language dropdown scrollbar - always visible on macOS */

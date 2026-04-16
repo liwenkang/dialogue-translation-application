@@ -249,6 +249,8 @@ export default function InputArea() {
   }, [text, isSending, addMessage, autoTranslate]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Skip during IME composition (e.g. Chinese/Japanese input on Windows)
+    if (e.nativeEvent.isComposing || e.key === "Process") return;
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -264,7 +266,10 @@ export default function InputArea() {
   };
 
   return (
-    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
+    <div
+      className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3"
+      style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+    >
       <div className="flex items-end gap-2">
         <VoiceButton
           isRecording={isRecording}
