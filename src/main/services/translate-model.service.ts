@@ -208,7 +208,7 @@ export class TranslateModelService {
     if (fs.existsSync(venvPython)) {
       return venvPython;
     }
-    return "python3";
+    return isWin ? "python" : "python3";
   }
 
   private getConvertBinary(): string {

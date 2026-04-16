@@ -87,7 +87,7 @@ export class TranslateService {
     if (fs.existsSync(venvPython)) {
       return venvPython;
     }
-    return "python3";
+    return isWin ? "python" : "python3";
   }
 
   async start(): Promise<void> {
