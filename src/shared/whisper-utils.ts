@@ -26,6 +26,10 @@ export function cleanWhisperOutput(text: string): string {
   // Remove repetitive hallucination patterns (e.g. repeated punctuation or filler)
   cleaned = cleaned.replace(/(\.\.\.|…){2,}/g, "...");
 
+  // Remove sentence-level Whisper looping hallucination: 2+ consecutive
+  // repeats of a segment ≥8 chars (e.g. "请把我刚才说的话翻译一下，请把我刚才说的话翻译一下，")
+  cleaned = cleaned.replace(/(.{8,80}?)\1+/g, "$1");
+
   // Remove repeated identical short phrases (3+ consecutive repeats of 2-20 char phrases)
   cleaned = cleaned.replace(/(.{2,20}?)\1{2,}/g, "$1");
 

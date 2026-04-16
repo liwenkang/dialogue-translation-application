@@ -16,6 +16,49 @@ const WHISPER_SERVER_HOST = "127.0.0.1";
 // Traditional Chinese → Simplified Chinese converter
 const t2s = OpenCC.Converter({ from: "tw", to: "cn" });
 
+/**
+ * Older whisper.cpp versions return full language names (e.g. "english",
+ * "chinese") instead of ISO 639-1 codes. This map normalizes them.
+ */
+const WHISPER_LANG_NAME_TO_CODE: Record<string, string> = {
+  english: "en",
+  chinese: "zh",
+  japanese: "ja",
+  korean: "ko",
+  french: "fr",
+  german: "de",
+  russian: "ru",
+  spanish: "es",
+  italian: "it",
+  portuguese: "pt",
+  dutch: "nl",
+  polish: "pl",
+  turkish: "tr",
+  arabic: "ar",
+  hindi: "hi",
+  swedish: "sv",
+  czech: "cs",
+  greek: "el",
+  hungarian: "hu",
+  romanian: "ro",
+  danish: "da",
+  finnish: "fi",
+  indonesian: "id",
+  malay: "ms",
+  norwegian: "no",
+  thai: "th",
+  ukrainian: "uk",
+  vietnamese: "vi",
+};
+
+/** Normalize whisper language output to ISO 639-1 code. */
+function normalizeLanguageCode(raw: string): string {
+  if (!raw || raw === "unknown") return "unknown";
+  // Already a short code (2-3 chars)
+  if (raw.length <= 3) return raw;
+  return WHISPER_LANG_NAME_TO_CODE[raw.toLowerCase()] ?? "unknown";
+}
+
 export class WhisperService {
   private modelsDir: string;
   private cliBinaryPath: string | null = null;
@@ -266,7 +309,10 @@ export class WhisperService {
           res.on("end", () => {
             try {
               const json = JSON.parse(data);
-              // Extract language code from language_probabilities (keys are codes like "en", "zh")
+              // Extract language code: prefer language_probabilities (newer
+              // whisper.cpp versions with ISO codes as keys), fall back to
+              // top-level "language" field (may be a full name like "english"
+              // in older versions — normalizeLanguageCode handles both).
               let language = "unknown";
               if (
                 json.language_probabilities &&
@@ -281,6 +327,11 @@ export class WhisperService {
                     language = code;
                   }
                 }
+              } else if (
+                typeof json.language === "string" &&
+                json.language
+              ) {
+                language = normalizeLanguageCode(json.language);
               }
               const text = (json.text || "").trim();
               resolve({ text, language });
@@ -368,7 +419,9 @@ export class WhisperService {
       );
 
       const langMatch = stderr.match(/auto-detected language:\s*(\w+)/);
-      const language = langMatch ? langMatch[1] : "unknown";
+      const language = langMatch
+        ? normalizeLanguageCode(langMatch[1])
+        : "unknown";
       const text = stdout
         .trim()
         .replace(/^\s*\[.*?\]\s*/gm, "")

@@ -3,10 +3,13 @@ import { useSettingsStore } from "../stores/settingsStore";
 
 // Translation context buffering delay (ms)
 const TRANSLATION_BUFFER_MS = 1200;
+// Max transient-failure retries for model availability check per session
+const MAX_AVAILABILITY_CHECK_RETRIES = 3;
 
 export interface StreamingTranslationHandle {
   bufferForTranslation: (segment: string) => void;
   getCommittedTranslation: () => string;
+  waitForQueue: () => Promise<void>;
   reset: () => void;
   cleanup: () => void;
 }
@@ -19,6 +22,7 @@ export function useStreamingTranslation(
   const committedTranslationRef = useRef("");
   const translationQueueRef = useRef<Promise<void>>(Promise.resolve());
   const translationAvailabilityRef = useRef<"unknown" | "available" | "unavailable">("unknown");
+  const availabilityCheckRetriesRef = useRef(0);
   const translationBufferRef = useRef("");
   const translationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -66,19 +70,27 @@ export function useStreamingTranslation(
         return;
       }
 
+      // Model availability check with retry for transient errors
       if (translationAvailabilityRef.current === "unknown") {
+        if (availabilityCheckRetriesRef.current >= MAX_AVAILABILITY_CHECK_RETRIES) {
+          translationAvailabilityRef.current = "unavailable";
+          return;
+        }
         try {
           const availability = await window.electronAPI.checkTranslationModel(
             sourceLang,
             targetLang,
           );
           if (!availability.available) {
+            // Model genuinely not installed — permanent for this session
             translationAvailabilityRef.current = "unavailable";
             console.warn(`Translation model not available for ${sourceLang} → ${targetLang}`);
             return;
           }
           translationAvailabilityRef.current = "available";
         } catch {
+          // Transient error (e.g. service still starting) — stay "unknown" to retry
+          availabilityCheckRetriesRef.current++;
           return;
         }
       }
@@ -131,10 +143,17 @@ export function useStreamingTranslation(
     [],
   );
 
+  // Wait for all queued translation work to complete
+  const waitForQueue = useCallback(
+    () => translationQueueRef.current,
+    [],
+  );
+
   const reset = useCallback(() => {
     committedTranslationRef.current = "";
     translationQueueRef.current = Promise.resolve();
     translationAvailabilityRef.current = "unknown";
+    availabilityCheckRetriesRef.current = 0;
     translationBufferRef.current = "";
     if (translationTimerRef.current) {
       clearTimeout(translationTimerRef.current);
@@ -153,6 +172,7 @@ export function useStreamingTranslation(
   return {
     bufferForTranslation,
     getCommittedTranslation,
+    waitForQueue,
     reset,
     cleanup,
   };

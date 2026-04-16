@@ -22,7 +22,7 @@ extraMetadata:
 mac:
   category: public.app-category.productivity
   type: distribution
-  forceCodeSigning: true
+  forceCodeSigning: false
   hardenedRuntime: true
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist

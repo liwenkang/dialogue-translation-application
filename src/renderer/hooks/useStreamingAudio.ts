@@ -105,16 +105,19 @@ export function useStreamingAudio(): UseStreamingAudioReturn {
     // Stop VAD
     transcription.stopVAD();
 
-    // Clean up translation buffer
+    // Clean up translation buffer (flush any remaining buffered text)
     translation.cleanup();
 
     // Wait for any in-flight transcription
     await transcription.waitForTranscription();
 
-    // Capture committed translation before cleanup
+    // Wait for all queued translation work to finish before capturing
+    await translation.waitForQueue();
+
+    // Capture committed translation after queue drains
     const capturedTranslation = translation.getCommittedTranslation();
 
-    // Stop audio capture
+    // Stop audio capture (sets stoppedRef = true)
     await capture.stop();
 
     // Final transcription with all accumulated audio

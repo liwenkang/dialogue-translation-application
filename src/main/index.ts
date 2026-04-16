@@ -239,15 +239,18 @@ function registerIpcHandlers() {
   ipcMain.handle(
     IPC_CHANNELS.TRANSLATE.CHECK_MODEL,
     async (_event, sourceLang: string, targetLang: string) => {
+      // Validate language codes — invalid codes are definitely unavailable
+      let parsed;
       try {
-        const parsed = checkModelSchema.parse({ sourceLang, targetLang });
-        return await translateService.checkModelAvailability(
-          parsed.sourceLang,
-          parsed.targetLang,
-        );
+        parsed = checkModelSchema.parse({ sourceLang, targetLang });
       } catch {
         return { available: false, direct: false, pivot: false };
       }
+      // Let service-start errors propagate so renderer can retry
+      return await translateService.checkModelAvailability(
+        parsed.sourceLang,
+        parsed.targetLang,
+      );
     },
   );
 
@@ -432,6 +435,11 @@ app.whenReady().then(() => {
   // Pre-warm whisper server so model is loaded before first use
   whisperService.preWarm().catch((err) => {
     console.warn("Whisper pre-warm failed:", err);
+  });
+
+  // Pre-warm translate service so it is ready before first streaming translation
+  translateService.start().catch((err) => {
+    console.warn("Translate service pre-warm failed:", err);
   });
 
   // Register global shortcut for voice recording toggle
