@@ -6,6 +6,7 @@ import readline from "readline";
 import { app, BrowserWindow } from "electron";
 import { IPC_CHANNELS } from "../../shared/ipc-channels";
 import { OPUS_MT_MODELS } from "../../shared/constants";
+import { HF_MIRROR_BASE_URL } from "../../shared/constants";
 
 export interface ModelInstallProgress {
   pair: string;
@@ -115,6 +116,7 @@ export class TranslateModelService {
     sourceLang: string,
     targetLang: string,
     mainWindow: BrowserWindow,
+    useMirror = false,
   ): Promise<void> {
     const pair = `${sourceLang}-${targetLang}`;
 
@@ -135,7 +137,7 @@ export class TranslateModelService {
     this.installingPairs.add(pair);
 
     try {
-      await this.runConversion(pair, hfModel, mainWindow);
+      await this.runConversion(pair, hfModel, mainWindow, useMirror);
       // Verify integrity after installation
       if (!this.verifyModelIntegrity(sourceLang, targetLang)) {
         this.deleteModel(sourceLang, targetLang);
@@ -153,6 +155,7 @@ export class TranslateModelService {
   async installModelsForLanguage(
     targetLang: string,
     mainWindow: BrowserWindow,
+    useMirror = false,
   ): Promise<void> {
     // We need models for all supported source languages to this target.
     // At minimum, we need en↔targetLang for pivot translation.
@@ -172,7 +175,7 @@ export class TranslateModelService {
     }
 
     for (const p of pairsToInstall) {
-      await this.installModel(p.source, p.target, mainWindow);
+      await this.installModel(p.source, p.target, mainWindow, useMirror);
     }
   }
 
@@ -230,6 +233,7 @@ export class TranslateModelService {
     pair: string,
     hfModel: string,
     mainWindow: BrowserWindow,
+    useMirror = false,
   ): Promise<void> {
     const binary = this.getConvertBinary();
     const outputDir = path.join(this.modelsDir, `opus-mt-${pair}`);
@@ -262,6 +266,7 @@ export class TranslateModelService {
           ...process.env,
           KMP_DUPLICATE_LIB_OK: "TRUE",
           OMP_NUM_THREADS: "1",
+          ...(useMirror ? { HF_ENDPOINT: HF_MIRROR_BASE_URL } : {}),
         },
       });
 

@@ -183,6 +183,10 @@ export interface ElectronAPI {
 
   // Performance
   getPerformanceReport: () => Promise<string>;
+
+  // Settings
+  getHfMirrorEnabled: () => Promise<boolean>;
+  setHfMirrorEnabled: (enabled: boolean) => Promise<void>;
 }
 
 declare global {

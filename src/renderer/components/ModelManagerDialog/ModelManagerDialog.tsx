@@ -17,6 +17,7 @@ export default function ModelManagerDialog() {
   const [loading, setLoading] = useState(false);
   const [pairStates, setPairStates] = useState<Record<string, PairInstallState>>({});
   const [bulkInstalling, setBulkInstalling] = useState(false);
+  const [hfMirror, setHfMirror] = useState(false);
   const langRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const hasScrolledToHighlight = useRef(false);
@@ -37,6 +38,7 @@ export default function ModelManagerDialog() {
     if (showModelManager) {
       hasScrolledToHighlight.current = false;
       fetchModels();
+      window.electronAPI.getHfMirrorEnabled().then(setHfMirror).catch(() => {});
     }
   }, [showModelManager, fetchModels]);
 
@@ -177,21 +179,46 @@ export default function ModelManagerDialog() {
     >
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl mx-4 max-w-lg w-full max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
-              翻译模型管理
-            </h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              已安装 {installedCount}/{totalCount} 个模型 · 所有翻译通过英语中转
-            </p>
+        <div className="px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">
+                翻译模型管理
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                已安装 {installedCount}/{totalCount} 个模型 · 所有翻译通过英语中转
+              </p>
+            </div>
+            <button
+              onClick={() => setShowModelManager(false)}
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none p-1"
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={() => setShowModelManager(false)}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl leading-none p-1"
-          >
-            ✕
-          </button>
+          {/* HuggingFace mirror toggle */}
+          <div className="flex items-center justify-between mt-3 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-600 dark:text-gray-300">国内镜像加速</span>
+              <span className="text-xs text-gray-400 dark:text-gray-500">(hf-mirror.com)</span>
+            </div>
+            <button
+              onClick={() => {
+                const next = !hfMirror;
+                setHfMirror(next);
+                window.electronAPI.setHfMirrorEnabled(next);
+              }}
+              className={`relative w-9 h-5 rounded-full transition-colors ${
+                hfMirror ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  hfMirror ? "translate-x-4" : ""
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
         {/* Body */}

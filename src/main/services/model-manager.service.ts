@@ -9,6 +9,8 @@ import {
   WHISPER_MODEL_URL,
   WHISPER_MODEL_FILENAME,
   WHISPER_MODEL_SHA256,
+  HF_OFFICIAL_BASE_URL,
+  HF_MIRROR_BASE_URL,
 } from "../../shared/constants";
 
 export class ModelManagerService {
@@ -30,10 +32,14 @@ export class ModelManagerService {
     return fs.existsSync(this.getWhisperModelPath());
   }
 
-  async downloadWhisperModel(mainWindow: BrowserWindow): Promise<void> {
+  async downloadWhisperModel(mainWindow: BrowserWindow, useMirror = false): Promise<void> {
     const targetDir = this.getWhisperDir();
     const targetPath = this.getWhisperModelPath();
     const tmpPath = targetPath + ".tmp";
+
+    const downloadUrl = useMirror
+      ? WHISPER_MODEL_URL.replace(HF_OFFICIAL_BASE_URL, HF_MIRROR_BASE_URL)
+      : WHISPER_MODEL_URL;
 
     fs.mkdirSync(targetDir, { recursive: true });
 
@@ -156,7 +162,7 @@ export class ModelManagerService {
         });
       };
 
-      download(WHISPER_MODEL_URL);
+      download(downloadUrl);
     });
   }
 }

@@ -15,6 +15,7 @@ import { PerformanceService } from "./services/performance.service";
 import { StreamingRecognitionService } from "./services/streaming-recognition.service";
 import { IPC_CHANNELS } from "../shared/ipc-channels";
 import { OPUS_MT_MODELS } from "../shared/constants";
+import fs from "fs";
 import {
   translateTextSchema,
   translateStreamSchema,
@@ -230,7 +231,7 @@ function registerIpcHandlers() {
     async (_event, modelId: string) => {
       if (!mainWindow) throw new Error("No main window");
       if (modelId === "whisper-base") {
-        await modelManagerService.downloadWhisperModel(mainWindow);
+        await modelManagerService.downloadWhisperModel(mainWindow, isHfMirrorEnabled());
       }
     },
   );
@@ -347,6 +348,7 @@ function registerIpcHandlers() {
       await translateModelService.installModelsForLanguage(
         parsed.targetLang,
         mainWindow,
+        isHfMirrorEnabled(),
       );
       // Restart translate service to pick up new models
       await translateService.stop();
@@ -362,6 +364,7 @@ function registerIpcHandlers() {
         parsed.sourceLang,
         parsed.targetLang,
         mainWindow,
+        isHfMirrorEnabled(),
       );
       // Restart translate service to pick up new models
       await translateService.stop();
@@ -391,6 +394,38 @@ function registerIpcHandlers() {
     }
     return statuses;
   });
+
+  // Settings IPC
+  const settingsPath = path.join(app.getPath("userData"), "settings.json");
+
+  function readSettings(): Record<string, unknown> {
+    try {
+      return JSON.parse(fs.readFileSync(settingsPath, "utf-8"));
+    } catch {
+      return {};
+    }
+  }
+
+  function writeSettings(settings: Record<string, unknown>): void {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), "utf-8");
+  }
+
+  function isHfMirrorEnabled(): boolean {
+    return readSettings().hfMirror === true;
+  }
+
+  ipcMain.handle(IPC_CHANNELS.SETTINGS.GET_HF_MIRROR, async () => {
+    return isHfMirrorEnabled();
+  });
+
+  ipcMain.handle(
+    IPC_CHANNELS.SETTINGS.SET_HF_MIRROR,
+    async (_event, enabled: boolean) => {
+      const settings = readSettings();
+      settings.hfMirror = !!enabled;
+      writeSettings(settings);
+    },
+  );
 
   // Performance IPC
   ipcMain.handle(IPC_CHANNELS.PERFORMANCE.GET_REPORT, async () => {

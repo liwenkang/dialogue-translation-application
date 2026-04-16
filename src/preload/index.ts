@@ -220,6 +220,12 @@ const electronAPI: ElectronAPI = {
   // Performance
   getPerformanceReport: () =>
     ipcRenderer.invoke(IPC_CHANNELS.PERFORMANCE.GET_REPORT),
+
+  // Settings
+  getHfMirrorEnabled: () =>
+    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.GET_HF_MIRROR),
+  setHfMirrorEnabled: (enabled: boolean) =>
+    ipcRenderer.invoke(IPC_CHANNELS.SETTINGS.SET_HF_MIRROR, !!enabled),
 };
 
 contextBridge.exposeInMainWorld("electronAPI", electronAPI);

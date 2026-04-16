@@ -46,6 +46,10 @@ export const IPC_CHANNELS = {
     STATUS: "model:status",
     DOWNLOAD_PROGRESS: "model:download-progress",
   },
+  SETTINGS: {
+    GET_HF_MIRROR: "settings:get-hf-mirror",
+    SET_HF_MIRROR: "settings:set-hf-mirror",
+  },
   PERFORMANCE: {
     GET_REPORT: "performance:get-report",
     TAKE_SNAPSHOT: "performance:take-snapshot",

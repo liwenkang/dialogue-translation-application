@@ -54,6 +54,10 @@ export const WHISPER_MODEL_SIZE = 148_000_000; // ~148MB
 export const WHISPER_MODEL_SHA256 =
   "60ed5bc3dd14eea856493d334349b405782ddcaf0028d4b5df4088345fba2efe";
 
+// HuggingFace mirror for users in China
+export const HF_OFFICIAL_BASE_URL = "https://huggingface.co";
+export const HF_MIRROR_BASE_URL = "https://hf-mirror.com";
+
 // Streaming translation: minimum text length before triggering chunked translation (renderer-side)
 export const STREAMING_TRANSLATION_THRESHOLD = 20;
 
