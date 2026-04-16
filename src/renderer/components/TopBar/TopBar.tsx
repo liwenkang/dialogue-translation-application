@@ -72,7 +72,7 @@ export default function TopBar() {
   return (
     <>
       <div
-        className={`flex items-center justify-between px-4 pb-3 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 select-none ${isMac ? "pt-8" : "pt-3"}`}
+        className={`flex items-center justify-between px-4 pb-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 select-none ${isMac ? "pt-12" : "pt-7 pr-[140px]"}`}
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       >
         {/* Left: App title */}
