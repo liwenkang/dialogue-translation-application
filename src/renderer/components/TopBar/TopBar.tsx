@@ -75,9 +75,6 @@ export default function TopBar() {
         className={`flex items-center justify-between px-4 pb-2 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 select-none ${isMac ? "pt-12" : "pt-[44px]"}`}
         style={{
           WebkitAppRegion: "drag",
-          ...(!isMac && {
-            paddingRight: "calc(100vw - env(titlebar-area-width, calc(100vw - 140px)))",
-          }),
         } as React.CSSProperties}
       >
         {/* Left: App title */}
