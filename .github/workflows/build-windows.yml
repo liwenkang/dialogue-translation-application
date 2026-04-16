@@ -143,8 +143,8 @@ jobs:
         shell: pwsh
         run: Get-ChildItem release -Filter "*.exe" | Format-Table Name, Length
 
-      # ── Upload ──
-      - name: Upload Windows installer
+      # ── Upload as artifact (backup) ──
+      - name: Upload Windows installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
@@ -152,3 +152,27 @@ jobs:
             release/*.exe
             release/*.exe.blockmap
           retention-days: 30
+
+      # ── Publish to GitHub Release ──
+      - name: Get version from package.json
+        id: version
+        shell: pwsh
+        run: |
+          $ver = (Get-Content package.json | ConvertFrom-Json).version
+          echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Create or update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.VERSION }}-win
+          name: Windows v${{ steps.version.outputs.VERSION }}
+          body: |
+            Windows x64 installer built from `main` branch.
+            Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          files: |
+            release/*.exe
+            release/*.exe.blockmap
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
